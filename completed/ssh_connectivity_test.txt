@@ -1,0 +1,68 @@
+SSH Connectivity Test Case
+
+Purpose
+-------
+To validate that SSH connectivity works correctly using both password-based and key-based authentication methods. 
+This test ensures that an SSH server allows connections with both authentication mechanisms as expected.
+
+Requirements
+------------
+1. SSH Server: A Linux server configured to allow SSH connections on the default SSH port (22).
+2. Client Machine: A client with SSH installed (e.g., `ssh` command available on Linux or compatible terminal).
+3. User Credentials:
+   - A valid username and password for password-based authentication.
+   - A generated SSH key pair (public and private keys) for key-based authentication.
+4. Access Permissions: Permissions to manage SSH server settings and access logs if needed.
+
+Test Setup
+----------
+1. Password-Based Authentication:
+   - Ensure the SSH server allows password-based authentication (`PasswordAuthentication yes` in `sshd_config`).
+   - Restart the SSH service to apply changes if needed.
+
+2. Key-Based Authentication:
+   - Configure the server to allow public key-based authentication (`PubkeyAuthentication yes` in `sshd_config`).
+   - Add the client’s public SSH key (`id_rsa.pub`) to the server’s `~/.ssh/authorized_keys` file for the user being tested.
+   - Restart the SSH service if necessary to apply changes.
+
+Test Steps
+----------
+1. Testing Password-Based Authentication:
+   - From the client machine, initiate an SSH connection using the password:
+     ssh username@server_ip
+   - Enter the password when prompted.
+   - Verify successful login to the server.
+
+2. Testing Key-Based Authentication:
+   - Ensure the private SSH key is accessible on the client machine (e.g., `~/.ssh/id_rsa`).
+   - Initiate an SSH connection without specifying a password:
+     ssh -i ~/.ssh/id_rsa username@server_ip
+   - Confirm that the connection succeeds without requiring a password prompt.
+
+3. Failure Simulation:
+   - Temporarily change the SSH server configuration to disable each authentication method (`PasswordAuthentication no` 
+     or `PubkeyAuthentication no`) and restart the SSH service.
+   - Attempt to connect using the disabled method, ensuring that authentication fails as expected.
+
+Expected Results (Pass/Fail Criteria)
+-------------------------------------
+- Pass Criteria:
+  - The client can successfully connect to the SSH server using password-based authentication when configured.
+  - The client can successfully connect to the SSH server using key-based authentication when configured.
+  - If a method is disabled on the server, the client is unable to connect using that method, and the connection 
+    attempt fails with an authentication error.
+
+- Fail Criteria:
+  - The client is unable to connect to the SSH server using password-based or key-based authentication when it 
+    should be allowed.
+  - The client is able to connect using a method that has been explicitly disabled on the server.
+  - Unexpected errors occur during the connection attempt (e.g., network errors unrelated to authentication).
+
+Cleanup
+-------
+1. Restore Default SSH Configuration:
+   - Ensure that the SSH server settings are returned to their original state, re-enabling any default authentication 
+     methods if they were disabled temporarily.
+
+2. Log Out of SSH Session:
+   - Exit any open SSH sessions to the server once testing is complete.
