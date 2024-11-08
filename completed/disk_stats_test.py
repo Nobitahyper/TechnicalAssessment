@@ -1,12 +1,32 @@
+import argparse
+import platform
 import subprocess
 import sys
 import time
 import os
 
 class DiskStatsTest:
-    def __init__(self, disk="sda"):
+    def __init__(self, disk="sda", verbose = False):
         self.disk = disk
         self.status = 0
+        self.verbose = verbose
+
+    def check_compatibility(self):
+        """
+        Ensure the script is running on a Linux system.
+        """
+        if platform.system() != "Linux":
+            print("This script is only compatible with Linux.")
+            sys.exit(1)
+    
+    def check_hdparm(self):
+        """
+        Verify that 'hdparm' is installed, as it is required for disk activity.
+        """
+        result = subprocess.run("which hdparm", shell = True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print("Error: 'hdparm' is not installed. Please install it using 'sudo apt-get install hdparm'.")
+            sys.exit(1)
 
     def check_return_code(self, return_code, message, *output):
         """
@@ -55,6 +75,10 @@ class DiskStatsTest:
         """
         Perform the sequence of checks and validation to test the disk statistics.
         """
+        # Check system compatibility and hdparm availability
+        self.check_compatibility()
+        self.check_hdparm()
+
         # Check if the disk is an NVDIMM
         if "pmem" in self.disk:
             print(f"Disk {self.disk} appears to be an NVDIMM, skipping.")
@@ -100,7 +124,11 @@ class DiskStatsTest:
         return self.status
 
 if __name__ == "__main__":
-    disk = sys.argv[1] if len(sys.argv) > 1 else "sda"
-    tester = DiskStatsTest(disk)
+    parser = argparse.ArgumentParser(description="Disk stats test script")
+    parser.add_argument("disk", type=str, help="Disk device name (e.g., sda)")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
+    args = parser.parse_args()
+
+    tester = DiskStatsTest(disk=args.disk, verbose=args.verbose)
     exit_code = tester.test_disk_stats()
     sys.exit(exit_code)
